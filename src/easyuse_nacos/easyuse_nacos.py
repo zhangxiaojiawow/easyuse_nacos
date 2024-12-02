@@ -59,7 +59,9 @@ class NacosConfigProperty:
             return nacos.NacosClient(os.environ.get('NACOS_SERVER'),
                                      namespace=os.environ.get('NACOS_NAMESPACE_ID'),
                                      ak=os.environ.get('NACOS_AK'),
-                                     sk=os.environ.get('NACOS_SK'))
+                                     sk=os.environ.get('NACOS_SK'),
+                                     username=os.environ.get('NACOS_USERNAME'),
+                                     password=os.environ.get('NACOS_PASSWORD'))
         else:
             raise Exception("""
             there is no nacos client, you can set environment variable NACOS_SERVER NACOS_NAMESPACE_ID NACOS_AK NACOS_SK
@@ -97,9 +99,12 @@ class NacosConfig(metaclass=NacosConfigMeta):
     Base class for defining Nacos-like configurations.  Subclasses define attributes,
     All config class should inherit from this class
     """
-    def __init_subclass__(cls, nacos_client=None, server_address=None, namespace_id=None, ak=None, sk=None) -> None:
+    def __init_subclass__(cls, nacos_client=None, server_address=None, namespace_id=None,
+                          username=None, password=None, ak=None, sk=None) -> None:
         if nacos_client or (server_address and namespace_id):
-            client = nacos_client if nacos_client else nacos.NacosClient(server_address, namespace=namespace_id, ak=ak, sk=sk)
+            client = nacos_client if nacos_client else nacos.NacosClient(server_address, namespace=namespace_id,
+                                                                         username=username, password=password,
+                                                                         ak=ak, sk=sk)
             anontations = cls.__annotations__ 
             for key, attr in cls.__dict__.items():
                 if isinstance(attr, NacosConfigProperty):
