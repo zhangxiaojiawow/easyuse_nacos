@@ -1,9 +1,0 @@
-site_name: EasyUse Nacos
-nav:
-  - Home: index.md
-  - About: about.md
-theme:
-  name: material
-  features:
-    - navigation.tabs
-    - content.code.copy

@@ -12,7 +12,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "nacos-sdk-python"
+]
 
 [project.urls]
-Homepage = "https://github.com/pypa/sampleproject"
-Issues = "https://github.com/pypa/sampleproject/issues"
+Homepage = "https://zhangxiaojiawow.github.io/easyuse_nacos/"
+github = "https://github.com/zhangxiaojiawow/easyuse_nacos"
+Issues = "https://github.com/zhangxiaojiawow/easyuse_nacos/issues"

@@ -1,5 +1,3 @@
-# Example Package
+# easyuse-nacos
 
-This is a simple example package. You can use
-[GitHub-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
-to write your content.
+easyuse-nacos is a user-friendly wrapper around the [nacos-sdk-python](https://github.com/nacos-group/nacos-sdk-python) package. please visit [homepage](https://zhangxiaojiawow.github.io/easyuse_nacos/) for more deatils.
