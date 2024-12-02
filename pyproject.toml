@@ -1,6 +1,6 @@
 [project]
 name = "easyuse_nacos"
-version = "0.0.1"
+version = "0.0.6"
 authors = [
   { name="zhangxiaojia", email="47974937@qq.com" },
 ]
