@@ -631,7 +631,7 @@
 </span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>    <span class="s2">&quot;age&quot;</span><span class="p">:</span> <span class="mi">18</span>
 </span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="p">}</span>
 </span></code></pre></div>
-<p>所有的配置类必须继承自<code>NacosConfig</code>类。</p>
+<p>使用easyuse-nacos，从Nacos Server读取配置内容非常简单。我们定义一个继承自<code>NacosConfig</code>的数据类，在配置类中定义与需要读取的配置项的data-id同名的属性，同时将配置项所在的group传入NacosConfigProperty中即可, 如果group为默认组（DEFAULT_GROUP）,则可以不用配置。接下来，直接读取对应的类属性就可以！</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>使用类属性和实例属性访问配置项内容，返回结果完全相同。这两种方式完全等价，通常建议直接使用类属性进行访问。
