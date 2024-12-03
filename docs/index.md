@@ -37,7 +37,7 @@ print(ExampleConfig.test_json)
 }
 ```
 
-所有的配置类必须继承自`NacosConfig`类。
+使用easyuse-nacos，从Nacos Server读取配置内容非常简单。我们定义一个继承自`NacosConfig`的数据类，在配置类中定义与需要读取的配置项的data-id同名的属性，同时将配置项所在的group传入NacosConfigProperty中即可, 如果group为默认组（DEFAULT_GROUP）,则可以不用配置。接下来，直接读取对应的类属性就可以！
 
 !!! note
   
