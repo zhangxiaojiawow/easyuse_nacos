@@ -4,6 +4,21 @@ import logging
 from pydantic import create_model, BaseModel, Field
 import json
 
+def create_default_env_nacos_client():
+    if os.environ.get('NACOS_SERVER') and os.environ.get('NACOS_NAMESPACE_ID'):
+        return nacos.NacosClient(os.environ.get('NACOS_SERVER'),
+                                     namespace=os.environ.get('NACOS_NAMESPACE_ID'),
+                                     ak=os.environ.get('NACOS_AK'),
+                                     sk=os.environ.get('NACOS_SK'),
+                                     username=os.environ.get('NACOS_USERNAME'),
+                                     password=os.environ.get('NACOS_PASSWORD'))
+    else:
+        return None
+
+# 在模块级别，管理通过环境变量创建的nacosclient, 避免创建多个client实例，造成的内存占用以及
+# 每次初始化过程中，可能的授权请求耗时(如果传入username和password)
+default_env_nacos_client = create_default_env_nacos_client()
+
 
 class NacosConfigProperty:
     """
@@ -53,16 +68,19 @@ class NacosConfigProperty:
         First use the _nacos_client in the instance, which can be config with the class attribute in NacosConfig.
         If not exist, use the environment variable to create a new nacos client
         """
+        global default_env_nacos_client
+        
         if hasattr(self, '_nacos_client') and self._nacos_client:
             return self._nacos_client
-        elif os.environ.get('NACOS_SERVER') and os.environ.get('NACOS_NAMESPACE_ID'):
-            return nacos.NacosClient(os.environ.get('NACOS_SERVER'),
-                                     namespace=os.environ.get('NACOS_NAMESPACE_ID'),
-                                     ak=os.environ.get('NACOS_AK'),
-                                     sk=os.environ.get('NACOS_SK'),
-                                     username=os.environ.get('NACOS_USERNAME'),
-                                     password=os.environ.get('NACOS_PASSWORD'))
+        elif default_env_nacos_client:
+            return default_env_nacos_client
         else:
+            # 在一些情况下，模块加载时环境变量可能未设置，导致模块加载过程中构造的default_env_nacos_client为空,
+            # 尝试再次读取环境变量，构造nacos_client
+            default_env_nacos_client = create_default_env_nacos_client()
+            if default_env_nacos_client:
+                return default_env_nacos_client
+            
             raise Exception("""
             there is no nacos client, you can set environment variable NACOS_SERVER NACOS_NAMESPACE_ID NACOS_AK NACOS_SK
             or config it with class decorator @nacos_config
