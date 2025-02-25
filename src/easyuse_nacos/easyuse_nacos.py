@@ -3,6 +3,7 @@ import os
 import logging
 from pydantic import create_model, BaseModel, Field
 import json
+from nacos import NacosClient
 
 def create_default_env_nacos_client():
     if os.environ.get('NACOS_SERVER') and os.environ.get('NACOS_NAMESPACE_ID'):
@@ -29,17 +30,26 @@ class NacosConfigProperty:
         self.default_value = default_value
         self.group = group
         self.attr_name = None
-        self._nacos_client = None
+        self._nacos_client:NacosClient = None
         self.no_snap_shot = no_snap_shot
         self.dynamic_model = None
         self.should_json_data = False
+        self.current_val = None
+
+    def val_callbcak(self, params):
+        self.current_val = params['content']
+
 
     def __get__(self, instance, owner):
         """
         when there has no config value in server or encounter error, return default value
         """
         try:
-            val = self._get_nacos_client().get_config(self.attr_name, self.group, no_snapshot=self.no_snap_shot)
+            if self.current_val:
+                val = self.current_val
+            else:
+                val = self._get_nacos_client().get_config(self.attr_name, self.group, no_snapshot=self.no_snap_shot)
+                self.current_val = val
         except Exception as e:
             val = None
             logging.error(e)
@@ -71,23 +81,26 @@ class NacosConfigProperty:
         global default_env_nacos_client
         
         if hasattr(self, '_nacos_client') and self._nacos_client:
-            return self._nacos_client
+            pass
         elif default_env_nacos_client:
-            return default_env_nacos_client
+            self._nacos_client = default_env_nacos_client
         else:
             # 在一些情况下，模块加载时环境变量可能未设置，导致模块加载过程中构造的default_env_nacos_client为空,
             # 尝试再次读取环境变量，构造nacos_client
             default_env_nacos_client = create_default_env_nacos_client()
             if default_env_nacos_client:
-                return default_env_nacos_client
-            
-            raise Exception("""
+                self._nacos_client = default_env_nacos_client
+            else: 
+                raise Exception("""
             there is no nacos client, you can set environment variable NACOS_SERVER NACOS_NAMESPACE_ID NACOS_AK NACOS_SK
             or config it with class decorator @nacos_config
             @nacos_config(SERVER_ADDRESSES, NAMESPACE_ID)
             class MyConfig(NacosConfig):
                 test_key = NacosConfigProperty(1, group='group')
             """)
+        # 添加监听器
+        self._nacos_client.add_config_watcher(self.attr_name, self.group, self.val_callbcak)
+        return self._nacos_client
 
     def __set__(self, instance, value):
         """
@@ -123,20 +136,23 @@ class NacosConfig(metaclass=NacosConfigMeta):
             client = nacos_client if nacos_client else nacos.NacosClient(server_address, namespace=namespace_id,
                                                                          username=username, password=password,
                                                                          ak=ak, sk=sk)
-            anontations = cls.__annotations__ 
-            for key, attr in cls.__dict__.items():
-                if isinstance(attr, NacosConfigProperty):
-                    attr._nacos_client = client
-                    if key in anontations:
-                        if attr.default_value:
-                            if callable(attr.default_value):
-                                attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], Field(default_factory = attr.default_value))})
-                            else:
-                                attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], attr.default_value)})
+        else:
+            client = None
+
+        anontations = cls.__annotations__ 
+        for key, attr in cls.__dict__.items():
+            if isinstance(attr, NacosConfigProperty):
+                attr._nacos_client = client
+                if key in anontations:
+                    if attr.default_value:
+                        if callable(attr.default_value):
+                            attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], Field(default_factory = attr.default_value))})
                         else:
-                            attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], ...)})
-                        if issubclass(anontations[key], BaseModel):
-                            attr.should_json_data = True
+                            attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], attr.default_value)})
+                    else:
+                        attr.dynamic_model = create_model('dynamic_model', ** {key: (anontations[key], ...)})
+                    if issubclass(anontations[key], BaseModel):
+                        attr.should_json_data = True    
 
 
 
